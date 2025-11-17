@@ -9,7 +9,7 @@ function App() {
     <>
       <div className="
             app-container
-            w-full min-h-screen
+            w-screen min-h-screen
             sm:w-[420px] sm:min-h-[800px] 
             p-[20px] sm:rounded-2xl">
         <br />
