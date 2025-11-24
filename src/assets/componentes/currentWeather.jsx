@@ -93,102 +93,115 @@ function CurrentWeather() {
 
 
     // pronostico actual
-    function apiCurrent() {
+    async function apiCurrent() {
         const url = "https://api.open-meteo.com/v1/forecast?latitude=-34.6131&longitude=-58.3772&hourly=precipitation_probability&current=temperature_2m,weather_code,relative_humidity_2m&timezone=auto";
 
-        fetch(url)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`❌ Error al acceder a la API. Código: ${response.status}`);
+        try {
+            const response = await fetch(url);
+
+            if (!response.ok) {
+                throw new Error(`❌ Error al acceder a la API. Código: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            const times = data.hourly.time;
+            const precipitation = data.hourly.precipitation_probability;
+
+            // current.time = "2025-11-16T21:15"
+            // Lo convertimos a "2025-11-16T21:00"
+            const currentTimeRaw = data.current.time;
+            const currentTime = currentTimeRaw.slice(0, 13) + ":00";
+
+            let contador = 0;
+
+            for (let i = 0; i < precipitation.length; i++) {
+                contador++;
+
+                if (times[i] === currentTime) {
+                    break;
                 }
-                return response.json();
-            })
-            .then(data => {
+            }
 
-                const times = data.hourly.time;
-                const precipitation = data.hourly.precipitation_probability;
+            setWeather(prev => ({
+                ...prev,
+                currentIcon: iconos[data.current.weather_code],
+                currentTemperature: parseInt(data.current.temperature_2m) + "°",
+                currentDescription: espesificacion[data.current.weather_code],
+                currentPrain: data.hourly.precipitation_probability[contador] + "%",
+                Humadity: data.current.relative_humidity_2m + "%"
+            }));
 
-                // current.time = "2025-11-16T21:15"
-                // Lo convertimos a "2025-11-16T21:00"
-                const currentTimeRaw = data.current.time;
-                const currentTime = currentTimeRaw.slice(0, 13) + ":00";
+            console.log("api pronostico actual cargado correctamente");
 
-                // console.log("currentTime normalizado:", currentTime);
-
-                let contador = 0;
-
-                for (let i = 0; i < precipitation.length; i++) {
-
-                    contador++;
-
-                    if (times[i] === currentTime) {
-                        // console.log("Coincidencia encontrada en el índice:", i);
-                        // console.log("Valor de precipitation_probability:", precipitation[i]);
-                        // console.log("Valor final de contador:", contador);
-                        break;
-                    }
-                }
-
-                setWeather(prev => ({
-                    ...prev,
-                    currentIcon: iconos[data.current.weather_code],
-                    currentTemperature: parseInt(data.current.temperature_2m) + "°",
-                    currentDescription: espesificacion[data.current.weather_code],
-                    currentPrain: data.hourly.precipitation_probability[contador] + "%",
-                    Humadity: data.current.relative_humidity_2m + "%"
-                }));
-
-                console.log("api pronostico actual cargado correctamente");
-            })
-            .catch(error => console.error("❌ Error en fetch:", error));
+        } catch (error) {
+            console.error("❌ Error en fetch:", error);
+        }
     }
+
 
 
 
 
     // pronostico dias
-    function daysApi() {
-        // aca va la api
+    async function daysApi() {
         const weather_Days = "https://api.open-meteo.com/v1/forecast?latitude=-34.6131&longitude=-58.3772&daily=weather_code,temperature_2m_max,temperature_2m_min";
 
-        fetch(weather_Days)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`❌ Error al acceder a la API. Código de estado: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                setWeather(prev => ({
-                    ...prev,
+        try {
+            const response = await fetch(weather_Days);
 
-                    todayIcon0: iconos[data.daily.weather_code[0]],
-                    todayMin0: parseInt(data.daily.temperature_2m_min[0]) + "°",
-                    todayMax0: parseInt(data.daily.temperature_2m_max[0]) + "°",
+            if (!response.ok) {
+                throw new Error(`❌ Error al acceder a la API. Código de estado: ${response.status}`);
+            }
 
-                    todayIcon1: iconos[data.daily.weather_code[1]],
-                    todayMin1: parseInt(data.daily.temperature_2m_min[1]) + "°",
-                    todayMax1: parseInt(data.daily.temperature_2m_max[1]) + "°",
+            const data = await response.json();
 
-                    todayIcon2: iconos[data.daily.weather_code[2]],
-                    todayMin2: parseInt(data.daily.temperature_2m_min[2]) + "°",
-                    todayMax2: parseInt(data.daily.temperature_2m_max[2]) + "°",
+            setWeather(prev => ({
+                ...prev,
 
-                    todayIcon3: iconos[data.daily.weather_code[3]],
-                    todayMin3: parseInt(data.daily.temperature_2m_min[3]) + "°",
-                    todayMax3: parseInt(data.daily.temperature_2m_max[3]) + "°",
+                todayIcon0: iconos[data.daily.weather_code[0]],
+                todayMin0: parseInt(data.daily.temperature_2m_min[0]) + "°",
+                todayMax0: parseInt(data.daily.temperature_2m_max[0]) + "°",
 
-                    todayIcon4: iconos[data.daily.weather_code[4]],
-                    todayMin4: parseInt(data.daily.temperature_2m_min[4]) + "°",
-                    todayMax4: parseInt(data.daily.temperature_2m_max[4]) + "°"
-                }));
-                console.log("api pronostico dias cargado correctamente")
-            })
+                todayIcon1: iconos[data.daily.weather_code[1]],
+                todayMin1: parseInt(data.daily.temperature_2m_min[1]) + "°",
+                todayMax1: parseInt(data.daily.temperature_2m_max[1]) + "°",
 
-            .catch(error => {
-                console.error("❌ Error al obtener los datos del clima:", error.message);
-            });
+                todayIcon2: iconos[data.daily.weather_code[2]],
+                todayMin2: parseInt(data.daily.temperature_2m_min[2]) + "°",
+                todayMax2: parseInt(data.daily.temperature_2m_max[2]) + "°",
+
+                todayIcon3: iconos[data.daily.weather_code[3]],
+                todayMin3: parseInt(data.daily.temperature_2m_min[3]) + "°",
+                todayMax3: parseInt(data.daily.temperature_2m_max[3]) + "°",
+
+                todayIcon4: iconos[data.daily.weather_code[4]],
+                todayMin4: parseInt(data.daily.temperature_2m_min[4]) + "°",
+                todayMax4: parseInt(data.daily.temperature_2m_max[4]) + "°"
+            }));
+
+            console.log("api pronostico dias cargado correctamente");
+
+        } catch (error) {
+            console.error("❌ Error al obtener los datos del clima:", error.message);
+        }
     }
+
+
+
+
+    // valores pronosticos de dias
+    const dayLabels = ["Mañ", "P.Mañ", "T.P.Mañ", "Ul.Dia"];
+
+    // un array dinámico con los datos del clima
+    const dayData = dayLabels.map((label, index) => ({
+        label,
+        icon: weather[`todayIcon${index + 1}`],
+        min: weather[`todayMin${index + 1}`],
+        max: weather[`todayMax${index + 1}`]
+    }));
+
+
 
 
 
@@ -242,51 +255,18 @@ function CurrentWeather() {
                     temperature-min-max-days
                     col-span-4 col-start-2
                     grid grid-cols-4 grid-rows-1 gap-2
-                    bg-[aliceblue] rounded-2xl">
+                    bg-[aliceblue] rounded-2xl"
+                >
+                    {dayData.map((item, i) => (
+                        <div key={i} className="flex flex-col items-center justify-center">
+                            <h2>{item.label}</h2>
+                            <span className="text-4xl">{item.icon}</span>
 
-                    <div className="
-                        flex flex-col items-center justify-center">
-                        <h2>Mañ</h2>
-                        <span className="text-4xl">{weather.todayIcon1}</span>
-                        <p className="">
-                            <span id="temperature_min_1">{weather.todayMin1}</span>
-                            |
-                            <span id="temperature_max_1">{weather.todayMax1}</span>
-                        </p>
-                    </div>
-
-                    <div className="
-                        flex flex-col items-center justify-center">
-                        <h2>P.Mañ</h2>
-                        <span className="text-4xl">{weather.todayIcon2}</span>
-                        <p className="">
-                            <span id="temperature_min_1">{weather.todayMin2}</span>
-                            |
-                            <span id="temperature_max_1">{weather.todayMax2}</span>
-                        </p>
-                    </div>
-
-                    <div className="
-                        flex flex-col items-center justify-center">
-                        <h2>T.P.Mañ</h2>
-                        <span className="text-4xl">{weather.todayIcon3}</span>
-                        <p className="">
-                            <span id="temperature_min_1">{weather.todayMin3}</span>
-                            |
-                            <span id="temperature_max_1">{weather.todayMax3}</span>
-                        </p>
-                    </div>
-
-                    <div className="
-                        flex flex-col items-center justify-center">
-                        <h2>Ul.Dia</h2>
-                        <span className="text-4xl">{weather.todayIcon4}</span>
-                        <p className="">
-                            <span id="temperature_min_1">{weather.todayMin4}</span>
-                            |
-                            <span id="temperature_max_1">{weather.todayMax4}</span>
-                        </p>
-                    </div>
+                            <p>
+                                <span>{item.min}</span> | <span>{item.max}</span>
+                            </p>
+                        </div>
+                    ))}
                 </div>
             </section>
         </>
