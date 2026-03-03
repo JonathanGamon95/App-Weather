@@ -99,15 +99,12 @@ function CurrentWeather() {
         try {
             const response = await fetch(url);
 
-            if (!response.ok) {
-                throw new Error(`❌ Error al acceder a la API. Código: ${response.status}`);
-            }
-
             const data = await response.json();
-
             const times = data.hourly.time;
             const precipitation = data.hourly.precipitation_probability;
 
+            console.log(times)
+            console.log(precipitation)
             // current.time = "2025-11-16T21:15"
             // Lo convertimos a "2025-11-16T21:00"
             const currentTimeRaw = data.current.time;
@@ -136,6 +133,7 @@ function CurrentWeather() {
 
         } catch (error) {
             console.error("❌ Error en fetch:", error);
+            alert("❌ Error en fetch: error al obtener datos en la api")
         }
     }
 
